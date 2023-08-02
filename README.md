@@ -1,7 +1,10 @@
-# Bitbucket Backup
+# Git Repo Backup
 The goal of this script is to loop through a config file
 and clone all the repositories locally. Then a tool like **rsync**
 could sync the cloned repositores to a safe location.
+
+For now, this is hardcoded to work only with bitbucket, but plans to
+make more generic for other vendors exist.
 
 ## Config.ini
 The file shall have each section named after the bitbucket workspace. Each
