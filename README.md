@@ -34,4 +34,7 @@ Use podman to build the container
 > podman build . -t bbauto
 
 Use podman to run the script in container
-> podman run -v /backup:/backup:Z bbauto -b /backup/bitbucket
+> podman run -v /backups:/backups:Z bbauto -b /backups/bitbucket
+
+Test podman environment
+> podman run -it --entrypoint="/bin/bash" -v /backups:/backups bbauto
