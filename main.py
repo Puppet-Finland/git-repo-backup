@@ -53,11 +53,12 @@ class BitBackup():
         clone_dir = f"{self.tmp_dir}/{repo}"
         ssh_key = f"./keys/{self.config[workspace]['ssh_key']}"
         cmd = ['git', 'clone', repo_url, clone_dir]
-        r = subprocess.run(cmd, env={
-            'GIT_SSH_COMMAND': f'ssh -i {ssh_key} -o StrictHostKeyChecking=no'
-            }, check=True, capture_output=True)
-        if r.returncode != 0:
-            print(f"NonZero Return - {r.returncode} on clone of {repo_url}")
+        try:
+            subprocess.run(cmd, env={
+                'GIT_SSH_COMMAND': f'ssh -i {ssh_key} -o StrictHostKeyChecking=no'
+                }, check=True, capture_output=True)
+        except Exception:
+            print(f"Failed to run cmd '{cmd}': Got exception: {Exception}")
             return False
         print(f"Succesfully cloned {repo_url}")
         return True
@@ -100,7 +101,9 @@ class BitBackup():
         for workspace in self.workspaces:
             for repo in self.config[workspace]['repos'].split(','):
                 if not self.clone_repo(workspace, repo):
-                    success = False
+                    # TODO: decide if I want to do something here
+                    pass
+                    # success = False
         return success
 
 
