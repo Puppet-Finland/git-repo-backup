@@ -5,6 +5,7 @@ from typing import Optional
 from configparser import ConfigParser
 import argparse
 import subprocess
+from pathlib import Path
 
 class BitBackup():
     def __init__(self, config_path: str | None, backup_dir: str):
@@ -97,15 +98,39 @@ class BitBackup():
         Returns:
             bool: Indicates that none of the clone commands had a nonzero return code.
         """
-        success = True
+        failures = 0
         for workspace in self.workspaces:
             for repo in self.config[workspace]['repos'].split(','):
                 if not self.clone_repo(workspace, repo):
-                    # TODO: decide if I want to do something here
-                    pass
-                    # success = False
-        return success
+                    failures = failures + 1
+        return failures
 
+
+    def write_metric_file(self, textfile_dir: str, value: int):
+        """
+        Write a gauge metric to the textfile collector's directory.
+
+        Prometheus textfile collector format:
+        # HELP metric_name Help text
+        # TYPE metric_name counter
+        metric_name value
+        """
+
+        METRIC_NAME = "puppeteers_git_backup_errors"
+        METRIC_HELP = "Amount of errors since last run"
+        METRIC_FILE = os.path.join(textfile_dir, "git_backup.prom")
+
+        metric_content = "\n".join([
+            f"# HELP {METRIC_NAME} {METRIC_HELP}",
+            f"# TYPE {METRIC_NAME} counter",
+            f"{METRIC_NAME} {value}",]) + "\n"
+
+        try:
+            with open(METRIC_FILE, "w") as f:
+                f.write(metric_content)
+                print(f"Wrote metric: {METRIC_NAME} = {value}")
+        except Exception as e:
+            print(f"Error: Unable to write metric file '{METRIC_FILE}'\n{e}")
 
 
 if __name__ == '__main__':
@@ -114,9 +139,19 @@ if __name__ == '__main__':
                     description='This script will read a config.ini file and clone all repos.')
     parser.add_argument('-c', '--config', help="Path to config.ini used by program. See config-example.ini.")
     parser.add_argument('-b', '--backup-dir', default="./backups", required=True, help="Root directory where backups are finally stored.")
+    parser.add_argument('-t', '--textfile-dir', required=False, help="Where to put prom file for prometheus textfile collector.")
     args = parser.parse_args()
 
     bb = BitBackup(config_path=args.config, backup_dir=args.backup_dir)
-    if bb.all():
-        bb.replace_old()
-
+    failed = bb.all()
+    if args.textfile_dir:
+        path = Path(args.textfile_dir)
+        if path.exists() and path.is_dir():
+            try:
+                bb.write_metric_file(args.textfile_dir, failed)
+            except (PermissionError, OSError):
+                print(f"Error: Unable to write to '{args.textfile_dir}'")
+        else:
+            print(f"Error: '{args.textfile_dir}' doesnt exist or is not a directory")
+    bb.replace_old()
+    print("Finished")
