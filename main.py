@@ -49,7 +49,7 @@ class BitBackup():
         Returns:
             bool: If the command ran successful with returncode 0.
         """
-        repo_url = f"git@bitbucket.org:{workspace}/{repo}.git"
+        repo_url = f"git@ssh.bitbucket.org:{workspace}/{repo}.git"
         clone_dir = f"{self.tmp_dir}/{repo}"
         ssh_key = f"./keys/{self.config[workspace]['ssh_key']}"
         cmd = ['git', 'clone', repo_url, clone_dir]
