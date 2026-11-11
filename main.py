@@ -53,16 +53,25 @@ class BitBackup():
         repo_url = f"git@ssh.bitbucket.org:{workspace}/{repo}.git"
         clone_dir = f"{self.tmp_dir}/{repo}"
         ssh_key = f"./keys/{self.config[workspace]['ssh_key']}"
-        cmd = ['git', 'clone', repo_url, clone_dir]
-        try:
-            subprocess.run(cmd, env={
-                'GIT_SSH_COMMAND': f'ssh -i {ssh_key} -o StrictHostKeyChecking=no'
-                }, check=True, capture_output=True)
-        except Exception:
-            print(f"Failed to run cmd '{cmd}': Got exception: {Exception}")
+        ssh_command = (
+            f"ssh -i {ssh_key} "
+            f"-o UserKnownHostsFile=/app/known_hosts "
+            f"-o IdentitiesOnly=yes"
+        )
+
+        cmd = (
+            f"git clone "
+            f"-c 'core.sshCommand={ssh_command}' "
+            f"{repo_url} {clone_dir}"
+        )
+
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"success: cloned {repo_url} to {clone_dir}")
+            return True
+        else:
+            print(f"error: {result}")
             return False
-        print(f"Succesfully cloned {repo_url}")
-        return True
 
 
     def replace_old(self, repo: str | None = None):
