@@ -68,6 +68,7 @@ class BitBackup():
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode == 0:
             print(f"success: cloned {repo_url} to {clone_dir}")
+            self.replace_old(repo)
             return True
         else:
             print(f"error: {result}")
@@ -87,8 +88,8 @@ class BitBackup():
         if repo:
             print(f"Removing backup dir: {self.backup_dir}/{repo}")
             rmtree(f"{self.backup_dir}/{repo}")
-            print(f"Renaming {self.tmp_dir} to {self.backup_dir}")
-            os.rename(f"{self.tmp_dir}/{repo}",f"{self.backup_dir}")
+            print(f"Renaming {self.tmp_dir}/{repo} to {self.backup_dir}/{repo}")
+            os.rename(f"{self.tmp_dir}/{repo}",f"{self.backup_dir}/{repo}")
         else:
             print(f"Removing backup dir: {self.backup_dir}")
             rmtree(self.backup_dir)
@@ -162,5 +163,4 @@ if __name__ == '__main__':
                 print(f"Error: Unable to write to '{args.textfile_dir}'")
         else:
             print(f"Error: '{args.textfile_dir}' doesnt exist or is not a directory")
-    bb.replace_old()
     print("Finished")
